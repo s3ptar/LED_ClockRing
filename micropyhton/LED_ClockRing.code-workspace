@@ -1,0 +1,10 @@
+{
+    "settings": {
+        "python.terminal.activateEnvironment": false
+    },
+    "folders": [
+        {
+            "path": "LED_ClockRing"
+        }
+    ]
+}

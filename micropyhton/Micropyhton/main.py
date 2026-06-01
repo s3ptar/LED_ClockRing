@@ -1,82 +1,130 @@
-import json
+"""#####################################################################
+#! @ file:                   main.py
+#  @ projekt:                LED_ClockRing
+#  @ created on:             2026-06-01
+#  @ author:                 R. Gräber
+#  @ Target:                 esp32
+#  @ version:                0
+#  @ history:                -
+#  @ brief                  : erstellt mit Hilfe von Gemini, 
+#                             einem KI-Tool von OpenAI, um die Entwicklung zu beschleunigen.
+#####################################################################"""
+
+"""#####################################################################
+# Includes
+#####################################################################"""
+import sys
 import logging
-from microdot import Microdot, send_file
 import os
+import time
+from logging.handlers import RotatingFileHandler
+import webservices
+import utilities
+"""#####################################################################
+# Informations
+#####################################################################"""
 
-# 1. Logging Setup
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('webserver')
+"""#####################################################################
+# Declarations
+#####################################################################"""
 
-# Maximale Größe der Log-Datei in Bytes (z.B. 10 KB)
-MAX_LOG_SIZE = 10240 
-LOG_FILE = "log/app.log"
+"""#####################################################################
+# Constant
+#####################################################################"""
 
-def setup_logging():
-    # 1. Datei-Check (Rotation)
-    try:
-        if os.stat(LOG_FILE)[6] > MAX_LOG_SIZE:
-            os.remove(LOG_FILE)
-    except OSError:
-        pass
+"""#####################################################################
+# Global Variable
+#####################################################################"""
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.ERROR)
+"""#####################################################################
+# local Variable
+#####################################################################"""
 
-    # 2. Logger Instanz
-    logger = logging.getLogger('webserver')
-    logger.setLevel(logging.INFO)
+"""#####################################################################
+# Constant
+#####################################################################"""
 
-    # 3. Formatter definieren (Das ist der entscheidende Teil!)
-    # MicroPython logging erwartet ein Objekt mit einer format() Methode
-    formatter = logging.Formatter('%(levelname)s:%(name)s:%(message)s')
+"""#####################################################################
+# Local Funtions
+#####################################################################"""
 
-    # 4. Console Handler
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(formatter) # Formatter zuweisen
-    logger.addHandler(console_handler)
 
-    # 5. Custom File Handler
-    class FileHandler(logging.Handler):
-        def emit(self, record):
-            # Wir nutzen den Formatter des Handlers
-            log_entry = self.format(record) 
-            try:
-                with open(LOG_FILE, "a") as f:
-                    f.write(log_entry + "\n")
-            except Exception:
-                pass
 
-    file_handler = FileHandler()
-    file_handler.setFormatter(formatter) # Formatter auch hier zuweisen
-    logger.addHandler(file_handler)
     
-    return logger
+"""#####################################################################
+#! @fn           get_log_level
+#  @ brief       Konvertiert den String-Level in die logging-Konstante
+#  @ param       level_str - String wie "DEBUG", "INFO", etc.
+#  @ exception   none
+#  @ return      none
+#####################################################################"""    
+def get_log_level(level_str):
+    levels = {
+        "CRITICAL": logging.CRITICAL,
+        "ERROR": logging.ERROR,
+        "WARNING": logging.WARNING,
+        "INFO": logging.INFO,
+        "DEBUG": logging.DEBUG
+    }
+    return levels.get(level_str.upper(), logging.INFO)
+"""#####################################################################
+#! @fn           setup_logger
+#  @ brief       read the default config and override it with the override config
+#  @ param       name=__name__ - Name des Loggers, standardmäßig der Modulname
+#  @ exception   none
+#  @ return      none
+#####################################################################"""
+def setup_logger(name=__name__):
+    config = utilities.load_config("Logging")
+    
+    # Root Logger anpassen
+    logger = logging.getLogger()
+    logger.setLevel(get_log_level(config["loglevel_console"]))
+    
+    # Bestehende Handler löschen (wichtig bei Soft-Resets in MicroPython)
+    logger.handlers = []
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-# 2. Konfiguration laden
-def load_config():
-    try:
-        with open('config/config.json', 'r') as f:
-            return json.load(f)
-    except Exception as e:
-        logger.error("Fehler beim Laden der config.json: %s", e)
-        return None
+    # --- KONSOLEN-AUSGABE ---
+    if config["console_output"]:
+        # MicroPython nutzt standardmäßig einen StreamHandler für die Konsole
+        ch = logging.StreamHandler()
+        logger.setLevel(get_log_level(config["loglevel_console"]))
+        ch.setFormatter(formatter)
+        logger.addHandler(ch)
 
-config = load_config()
-logger = setup_logging()
-app = Microdot()
 
-# 3. Routen definieren
-@app.route('/')
-async def index(request):
-    logger.info("Anfrage auf Index-Seite erhalten")
-    return send_file('index.html')
+    # --- FILE-AUSGABE ---
+    if config["file_output"]:
+        # Standard Python nutzt den professionellen RotatingFileHandler
+        
+        fh = RotatingFileHandler(config["filepath"], maxBytes=config["max_bytes"], backupCount=config["backup_count"])
+        fh.setLevel(get_log_level(config["loglevel_file"]))
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
 
-@app.route('/api/status')
-async def status(request):
-    logger.info("API Status-Abruf")
-    return {'status': 'online', 'hardware': 'ESP32'}, 200
+    return logging.getLogger(__name__) # Gibt den Logger für main zurück
 
-# 4. Server starten
-#if config:
-#    logger.info("Starte Webserver auf Port %s...", config['server_port'])
-#    try:
-#        app.run(port=config['server_port'])
-#    except Exception as e:
-#        logger.critical("Server-Fehler: %s", e)
+
+"""#####################################################################
+#! @fn           int main(){
+#  @ brief       start up function
+#  @ param       none
+#  @ exception   none
+#  @ return      none
+#####################################################################"""
+if __name__ == "__main__":
+    print("Starting LED ClockRing Application")
+    
+    logger = setup_logger()
+    
+    while True:
+    
+        logger.info("Logger erfolgreich eingerichtet.")
+        time.sleep(10)
+        logger.debug("nur console")
+        webservices.start_webservices()
+
+
+    

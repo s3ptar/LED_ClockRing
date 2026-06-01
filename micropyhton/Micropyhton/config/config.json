@@ -1,6 +1,0 @@
-{
-    "wifi_ssid": "DEIN_WLAN_NAME",
-    "wifi_pass": "DEIN_PASSWORT",
-    "server_port": 80,
-    "log_level": "INFO"
-}
