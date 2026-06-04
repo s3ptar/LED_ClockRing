@@ -1,9 +1,0 @@
-{
-    "Logging": {
-        "loglevel": "INFO",
-        "filepath": "app.log",
-        "max_bytes": 51200,
-        "console_output": true,
-        "file_output": true
-    }
-}

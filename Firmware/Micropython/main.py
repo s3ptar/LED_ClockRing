@@ -1,0 +1,131 @@
+"""#####################################################################
+#! @ file:                   main.py
+#  @ projekt:                LED_ClockRing
+#  @ created on:             2026-06-01
+#  @ author:                 R. Gräber
+#  @ Target:                 esp32
+#  @ version:                0
+#  @ history:                -
+#  @ brief                  : erstellt mit Hilfe von Gemini, 
+#                             einem KI-Tool von OpenAI, um die Entwicklung zu beschleunigen.
+#####################################################################"""
+
+"""#####################################################################
+# Includes
+#####################################################################"""
+import sys
+import logging
+import os
+import time
+from logging.handlers import RotatingFileHandler
+import webservices
+import utilities
+import network
+"""#####################################################################
+# Informations
+#####################################################################"""
+
+"""#####################################################################
+# Declarations
+#####################################################################"""
+
+"""#####################################################################
+# Constant
+#####################################################################"""
+
+"""#####################################################################
+# Global Variable
+#####################################################################"""
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.ERROR)
+"""#####################################################################
+# local Variable
+#####################################################################"""
+
+"""#####################################################################
+# Constant
+#####################################################################"""
+
+"""#####################################################################
+# Local Funtions
+#####################################################################"""
+
+
+
+    
+"""#####################################################################
+#! @fn           get_log_level
+#  @ brief       Konvertiert den String-Level in die logging-Konstante
+#  @ param       level_str - String wie "DEBUG", "INFO", etc.
+#  @ exception   none
+#  @ return      none
+#####################################################################"""    
+def get_log_level(level_str):
+    levels = {
+        "CRITICAL": logging.CRITICAL,
+        "ERROR": logging.ERROR,
+        "WARNING": logging.WARNING,
+        "INFO": logging.INFO,
+        "DEBUG": logging.DEBUG
+    }
+    return levels.get(level_str.upper(), logging.INFO)
+"""#####################################################################
+#! @fn           setup_logger
+#  @ brief       read the default config and override it with the override config
+#  @ param       name=__name__ - Name des Loggers, standardmäßig der Modulname
+#  @ exception   none
+#  @ return      none
+#####################################################################"""
+def setup_logger(name=__name__):
+    config = utilities.load_config("Logging")
+    
+    # Root Logger anpassen
+    logger = logging.getLogger()
+    logger.setLevel(get_log_level(config["loglevel_console"]))
+    
+    # Bestehende Handler löschen (wichtig bei Soft-Resets in MicroPython)
+    logger.handlers = []
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+    # --- KONSOLEN-AUSGABE ---
+    if config["console_output"]:
+        # MicroPython nutzt standardmäßig einen StreamHandler für die Konsole
+        ch = logging.StreamHandler()
+        logger.setLevel(get_log_level(config["loglevel_console"]))
+        ch.setFormatter(formatter)
+        logger.addHandler(ch)
+
+
+    # --- FILE-AUSGABE ---
+    if config["file_output"]:
+        # Standard Python nutzt den professionellen RotatingFileHandler
+        
+        fh = RotatingFileHandler(config["filepath"], maxBytes=config["max_bytes"], backupCount=config["backup_count"])
+        fh.setLevel(get_log_level(config["loglevel_file"]))
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+
+    return logging.getLogger(__name__) # Gibt den Logger für main zurück
+
+
+"""#####################################################################
+#! @fn           int main(){
+#  @ brief       start up function
+#  @ param       none
+#  @ exception   none
+#  @ return      none
+#####################################################################"""
+if __name__ == "__main__":
+    print("Starting LED ClockRing Application")
+    
+    logger = setup_logger()
+    
+    while True:
+    
+        logger.info("Logger erfolgreich eingerichtet.")
+        time.sleep(10)
+        logger.debug("nur console")
+        webservices.start_webservices()
+
+
+    

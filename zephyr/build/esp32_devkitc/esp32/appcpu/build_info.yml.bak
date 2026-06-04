@@ -1,6 +1,0 @@
-west:
-  command: d:\zephyr\.venv\Scripts\west build -b esp32_devkitc/esp32/appcpu d:/zephyr/blinky_esp32
-    -p --build-dir d:/zephyr/blinky_esp32/build/esp32_devkitc/esp32/appcpu -- -DBOARD_ROOT=d:\zephyr\external\zephyr
-    -DCONFIG_DEBUG_OPTIMIZATIONS=y -DCONFIG_DEBUG_THREAD_INFO=y -DEXTRA_DTC_OVERLAY_FILE=d:/zephyr/blinky_esp32/esp32_devkitc.overlay;
-  topdir: d:\zephyr
-  version: 1.5.0
