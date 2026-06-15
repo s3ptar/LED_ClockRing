@@ -7,7 +7,8 @@
 #  @ version:                0
 #  @ history:                -
 #  @ brief                  : erstellt mit Hilfe von Gemini, 
-#                             einem KI-Tool von OpenAI, um die Entwicklung zu beschleunigen.
+#                             einem KI-Tool von OpenAI, um die
+                              Entwicklung zu beschleunigen.
 #####################################################################"""
 
 """#####################################################################
@@ -17,10 +18,11 @@ import sys
 import logging
 import os
 import time
-from logging.handlers import RotatingFileHandler
+#from logging.handlers import RotatingFileHandler
 import webservices
 import utilities
-import network
+import networkmanager
+from networkmanager import NetworkManager
 """#####################################################################
 # Informations
 #####################################################################"""
@@ -38,6 +40,8 @@ import network
 #####################################################################"""
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.ERROR)
+net_mgr = NetworkManager()
+
 """#####################################################################
 # local Variable
 #####################################################################"""
@@ -49,6 +53,62 @@ logging.basicConfig(level=logging.ERROR)
 """#####################################################################
 # Local Funtions
 #####################################################################"""
+
+
+class RotatingFileHandler(logging.Handler):
+    def __init__(self, filename, max_bytes=1024, backup_count=3):
+        super().__init__()
+        self.filename = filename
+        self.max_bytes = max_bytes
+        self.backup_count = backup_count
+        self._stream = open(filename, "a")
+
+    def emit(self, record):
+        try:
+            # Format the message
+            msg = self.format(record) + "\n"
+
+            # Check if we need to rollover before writing
+            if self._stream.tell() + len(msg) >= self.max_bytes:
+                self.do_rollover()
+
+            self._stream.write(msg)
+            self._stream.flush()
+        except Exception:
+            # Fail silently or use print() if debugging on hardware
+            pass
+
+    def do_rollover(self):
+        self._stream.close()
+
+        # Delete the oldest backup if it exists
+        oldest_file = f"{self.filename}.{self.backup_count}"
+        try:
+            os.remove(oldest_file)
+        except OSError:
+            pass
+
+        # Shift middle backups down: log.1 -> log.2, etc.
+        for i in range(self.backup_count - 1, 0, -1):
+            sfn = f"{self.filename}.{i}"
+            dfn = f"{self.filename}.{i + 1}"
+            try:
+                os.rename(sfn, dfn)
+            except OSError:
+                pass
+
+        # Rename current log to log.1
+        try:
+            os.rename(self.filename, f"{self.filename}.1")
+        except OSError:
+            pass
+
+        # Open a fresh log file
+        self._stream = open(self.filename, "w")
+
+    def close(self):
+        self._stream.close()
+        super().close()
 
 
 
@@ -100,7 +160,7 @@ def setup_logger(name=__name__):
     if config["file_output"]:
         # Standard Python nutzt den professionellen RotatingFileHandler
         
-        fh = RotatingFileHandler(config["filepath"], maxBytes=config["max_bytes"], backupCount=config["backup_count"])
+        fh = RotatingFileHandler(config["filepath"], max_bytes=config["max_bytes"], backup_count=config["backup_count"])
         fh.setLevel(get_log_level(config["loglevel_file"]))
         fh.setFormatter(formatter)
         logger.addHandler(fh)
@@ -119,10 +179,12 @@ if __name__ == "__main__":
     print("Starting LED ClockRing Application")
     
     logger = setup_logger()
+    logger.info("Logger erfolgreich eingerichtet.")
+    #networkmanager.start_networkmanager()
+    net_mgr.start(use_thread=True)
     
     while True:
-    
-        logger.info("Logger erfolgreich eingerichtet.")
+
         time.sleep(10)
         logger.debug("nur console")
         webservices.start_webservices()

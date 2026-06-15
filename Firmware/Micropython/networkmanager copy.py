@@ -1,5 +1,5 @@
 """#####################################################################
-#! @ file:                   networmanager.py
+#! @ file:                   networkmanager.py
 #  @ projekt:                LED_ClockRing
 #  @ created on:             2026-06-01
 #  @ author:                 R. Gräber
@@ -45,8 +45,16 @@ logger = logging.getLogger(__name__)
 # Local Funtions
 #####################################################################"""
 
+"""#####################################################################
+#! @fn           connect_sta(ssid, password, timeout=15):   
+#  @ brief       versucht, sich als Client (STA) mit einem WLAN zu verbinden.
+#  @ param       ssid: Der Name des WLANs, mit dem verbunden werden soll
+#  @ param       password: Das Passwort für den Access Point
+#  @ param       timeout: Maximale Zeit (in Sekunden) für den Verbindungsversuch
+#  @ exception   none
+#  @ return      none
+#####################################################################"""
 def connect_sta(ssid, password, timeout=15):
-    """Versucht, sich als Client (STA) mit einem WLAN zu verbinden."""
     sta = network.WLAN(network.STA_IF)
     sta.active(True)
     
@@ -68,8 +76,15 @@ def connect_sta(ssid, password, timeout=15):
     logger.info("Erfolgreich verbunden! IP: %s", sta.ifconfig()[0])
     return True
 
+"""#####################################################################
+#! @fn           start_ap(ssid, password):
+#  @ brief       Aktiviert den Access Point (AP) Modus
+#  @ param       ssid: Der Name des Access Points
+#  @ param       password: Das Passwort für den Access Point
+#  @ exception   none
+#  @ return      none
+#####################################################################"""
 def start_ap(ssid, password):
-    """Aktiviert den Access Point (AP) Modus."""
     logger.info(f"Aktiviere Access Point: {ssid}...")
     ap = network.WLAN(network.AP_IF)
     ap.active(True)
@@ -113,6 +128,29 @@ def start_networkmanager():
     # Bedingung 4: Wenn alles fehlschlägt -> AP-Modus
     logger.info("STA-Verbindungen fehlgeschlagen. Wechsle in AP-Modus...")
     start_ap(config["ap_mode"]["ssid"], config["ap_mode"]["password"])
+
+"""#####################################################################
+#! @fn           get_wlan_status
+#  @ brief       gibt den aktuellen Status der WLAN-Interfaces zurück, 
+# einschließlich Aktivität, Verbindungsstatus und IP-Adressen.
+#  @ param       none
+#  @ exception   none
+#  @ return      none
+#####################################################################"""
+def get_wlan_status():
+    sta = network.WLAN(network.STA_IF)
+    ap = network.WLAN(network.AP_IF)
+    
+    status = {
+        "sta_active": sta.active(),
+        "sta_connected": sta.isconnected(),
+        "sta_ip": sta.ifconfig()[0] if sta.isconnected() else None,
+        "ap_active": ap.active(),
+        "ap_ip": ap.ifconfig()[0] if ap.active() else None,
+        "wlan_status": "STA verbunden" if sta.isconnected() else ("AP aktiv" if ap.active() else "Keine Verbindung")
+    }
+    
+    return status
 
 """#####################################################################
 #! @fn           int main(){
