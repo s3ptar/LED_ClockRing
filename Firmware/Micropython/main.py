@@ -21,8 +21,8 @@ import time
 #from logging.handlers import RotatingFileHandler
 import webservices
 import utilities
-import networkmanager
 from networkmanager import NetworkManager
+from webservices import WebServer
 """#####################################################################
 # Informations
 #####################################################################"""
@@ -41,7 +41,7 @@ from networkmanager import NetworkManager
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.ERROR)
 net_mgr = NetworkManager()
-
+web_server = WebServer(debug=False)
 """#####################################################################
 # local Variable
 #####################################################################"""
@@ -180,14 +180,14 @@ if __name__ == "__main__":
     
     logger = setup_logger()
     logger.info("Logger erfolgreich eingerichtet.")
-    #networkmanager.start_networkmanager()
     net_mgr.start(use_thread=True)
     
     while True:
 
         time.sleep(10)
+        net_mgr_status = net_mgr.get_status()
         logger.debug("nur console")
-        webservices.start_webservices()
+        #web_server.start()
 
 
     
