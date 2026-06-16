@@ -19,10 +19,8 @@ import logging
 import os
 import time
 #from logging.handlers import RotatingFileHandler
-import webservices
 import utilities
 from networkmanager import NetworkManager
-from webservices import WebServer
 """#####################################################################
 # Informations
 #####################################################################"""
@@ -41,7 +39,6 @@ from webservices import WebServer
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.ERROR)
 net_mgr = NetworkManager()
-web_server = WebServer(debug=False)
 """#####################################################################
 # local Variable
 #####################################################################"""

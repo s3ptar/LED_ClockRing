@@ -65,7 +65,7 @@ class NetworkManager:
 
         self.ap.active(False)
         self.sta.active(False)
-        
+
         self.lock = _thread.allocate_lock()
         self.is_monitoring = False
         
@@ -251,6 +251,5 @@ class NetworkManager:
 #####################################################################"""
 
 if __name__ == "__main__":
-    #net_mgr_test = NetworkManager()
-    #net_mgr_test.start(use_thread=False)
-    print("networkmanager")
+    net_mgr_test = NetworkManager()
+    net_mgr_test.start(use_thread=False)
