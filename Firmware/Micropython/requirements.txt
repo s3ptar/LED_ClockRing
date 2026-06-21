@@ -5,3 +5,5 @@ threading==0.1.0
 network==0.1
 microdot==2.6.0
 utemplate==1.4.1
+webrepl==0.1.0
+esp==0.2.0
