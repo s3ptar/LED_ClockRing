@@ -483,6 +483,20 @@ function init_site(){
 			    draw_chart();
 								
 			}
+			if(targetId === "device") {
+
+			    fetch('/api/telemetry')
+					.then(response => {
+						if (!response.ok) {
+							throw new Error('Network response was not ok');
+							}
+						return response.json(); // Parses JSON response into JavaScript objects
+						})
+					.then(data => console.log(data))
+					.catch(error => console.error('There was a problem with your fetch operation:', error)
+				);
+
+			}
 
 		});
 	});

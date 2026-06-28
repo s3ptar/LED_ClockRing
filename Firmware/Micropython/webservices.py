@@ -18,7 +18,7 @@ import gc
 import time
 from microdot import Microdot, Response, send_file
 import os
-#from utemplate import compiled
+import utilities
 """#####################################################################
 # Informations
 #####################################################################"""
@@ -95,10 +95,16 @@ class WebServer:
         #async def index(request):
         #    log.info(f"Request received")
         #    return 'Hello World!'
-
         @self.app.route('/')
         async def index(request):
             return send_file('/www/index.html')
+
+        # Der API-Endpunkt für deine AJAX-Anfrage
+        @self.app.route('/api/telemetry')
+        def get_data(request):
+            # Das Dictionary, das an die Website zurückgegeben wird
+            # Microdot erkennt das Dict und sendet es automatisch als JSON mit dem Header 'application/json'
+            return utilities.get_device_telemetry()
 
         # Catch-All Route für alle statischen Dateien (CSS, JS, Bilder)
         @self.app.route('/<path:path>')
@@ -108,7 +114,11 @@ class WebServer:
                 return 'Nicht erlaubt', 403
 
             # Liefert die Datei aus dem /www-Ordner, falls sie existiert
+            log.debug(f"Static file: {path}")
             return send_file('/www/' + path)
+
+
+
 
 
 

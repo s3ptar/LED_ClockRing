@@ -15,7 +15,7 @@
 # Includes
 #####################################################################"""
 import sys
-import machine
+
 import logging
 import os
 import time
@@ -23,8 +23,7 @@ import utilities
 from networkmanager import NetworkManager
 import gc
 import webrepl
-import esp32
-import esp
+
 from webservices import WebServer
 import asyncio
 
@@ -185,14 +184,7 @@ async def main_loop():
     while True:
         await asyncio.sleep(30)
         net_mgr_status = net_mgr.get_status()
-        try:
-            # Liefert die Temperatur in Fahrenheit oder Celsius (je nach Chip/Firmware)
-            # Meistens wird die Temperatur in Grad Celsius zurückgegeben
-            temp_c = (esp32.raw_temperature() - 32) * 5 / 9
-            # Falls deine Firmware Fahrenheit liefert, umrechnen: (temp_f - 32) * 5/9
-            logger.info(f"Interne Chip-Temperatur: {temp_c:.1f} °C")
-        except AttributeError:
-            logger.info("Der Temperatursensor wird von diesem Chip/Firmware nicht unterstützt.")
+        utilities.get_device_telemetry()
 
 """#####################################################################
 #! @fn           int main(){
@@ -209,32 +201,7 @@ if __name__ == "__main__":
     net_mgr.start(use_thread=True)
     #webrepl.start()
 
-    # os.statvfs gibt Informationen über das Dateisystem zurück
-    # '/' steht für das Hauptverzeichnis
-    fs_info = os.statvfs('/')
-
-    # Blockgröße in Bytes
-    block_size = fs_info[0]
-    # Gesamtzahl der Blöcke
-    total_blocks = fs_info[2]
-    # Freie Blöcke
-    free_blocks = fs_info[3]
-
-    # Berechnung in Bytes und Kilobytes
-    total_flash = block_size * total_blocks
-    free_flash = block_size * free_blocks
-    used_flash = total_flash - free_flash
-
-    logger.info(f"Physische Flash-Größe: {esp.flash_size() / (1024 * 1000):.0f} MB")
-    logger.info(f"Freier Flash:     {free_flash / 1024:.2f} KB")
-    logger.info(f"Belegter Flash:   {used_flash / 1024:.2f} KB")
-    logger.info(f"Gesamt-Größe:     {total_flash / 1024:.2f} KB")
-    logger.info(f"Auslastung:       {(used_flash / total_flash) * 100:.1f}%")
-
-    # Holt die aktuellen Speicherwerte (in Bytes)
-    free_ram = gc.mem_free()
-    allocated_ram = gc.mem_alloc()
-    total_ram = free_ram + allocated_ram
+    utilities.get_device_telemetry()
 
     if gc.isenabled():
         logger.info(f"Garbage Collector disable, is now enabled.")
@@ -242,15 +209,6 @@ if __name__ == "__main__":
         gc.collect()
     else:
         logger.info(f"Garbage Collector enable")
-    logger.info(f"Freier RAM:     {free_ram / 1024:.2f} KB")
-    logger.info(f"Belegter RAM:   {allocated_ram / 1024:.2f} KB")
-    logger.info(f"Gesamt verfügbar: {total_ram / 1024:.2f} KB")
-    logger.info(f"Auslastung:     {(allocated_ram / total_ram) * 100:.1f}%")
-
-
-    # Holt die aktuelle CPU-Frequenz in Hertz
-    cpu_freq_hz = machine.freq()
-    logger.info(f"CPU-Frequenz: {cpu_freq_hz / 1000000:.0f} MHz")
 
     #asyncio.run(web_server.start())
     task1 = asyncio.create_task(web_server.start())
