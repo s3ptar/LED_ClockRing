@@ -25,6 +25,9 @@ import gc
 import webrepl
 import esp32
 import esp
+from webservices import WebServer
+import asyncio
+
 """#####################################################################
 # Informations
 #####################################################################"""
@@ -43,6 +46,8 @@ import esp
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.ERROR)
 net_mgr = NetworkManager()
+web_server = WebServer()
+
 """#####################################################################
 # local Variable
 #####################################################################"""
@@ -141,20 +146,20 @@ def setup_logger(name=__name__):
     config = utilities.load_config("Logging")
     
     # Root Logger anpassen
-    logger = logging.getLogger()
-    logger.setLevel(get_log_level(config["loglevel_console"]))
+    logger_ = logging.getLogger()
+    logger_.setLevel(get_log_level(config["loglevel_console"]))
     
     # Bestehende Handler löschen (wichtig bei Soft-Resets in MicroPython)
-    logger.handlers = []
+    logger_.handlers = []
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     # --- KONSOLEN-AUSGABE ---
     if config["console_output"]:
         # MicroPython nutzt standardmäßig einen StreamHandler für die Konsole
         ch = logging.StreamHandler()
-        logger.setLevel(get_log_level(config["loglevel_console"]))
+        logger_.setLevel(get_log_level(config["loglevel_console"]))
         ch.setFormatter(formatter)
-        logger.addHandler(ch)
+        logger_.addHandler(ch)
 
 
     # --- FILE-AUSGABE ---
@@ -164,10 +169,30 @@ def setup_logger(name=__name__):
         fh = RotatingFileHandler(config["filepath"], max_bytes=config["max_bytes"], backup_count=config["backup_count"])
         fh.setLevel(get_log_level(config["loglevel_file"]))
         fh.setFormatter(formatter)
-        logger.addHandler(fh)
+        logger_.addHandler(fh)
 
     return logging.getLogger(__name__) # Gibt den Logger für main zurück
 
+
+"""#####################################################################
+#! @fn           int main(){
+#  @ brief       start up function
+#  @ param       none
+#  @ exception   none
+#  @ return      none
+#####################################################################"""
+async def main_loop():
+    while True:
+        await asyncio.sleep(30)
+        net_mgr_status = net_mgr.get_status()
+        try:
+            # Liefert die Temperatur in Fahrenheit oder Celsius (je nach Chip/Firmware)
+            # Meistens wird die Temperatur in Grad Celsius zurückgegeben
+            temp_c = (esp32.raw_temperature() - 32) * 5 / 9
+            # Falls deine Firmware Fahrenheit liefert, umrechnen: (temp_f - 32) * 5/9
+            logger.info(f"Interne Chip-Temperatur: {temp_c:.1f} °C")
+        except AttributeError:
+            logger.info("Der Temperatursensor wird von diesem Chip/Firmware nicht unterstützt.")
 
 """#####################################################################
 #! @fn           int main(){
@@ -200,6 +225,7 @@ if __name__ == "__main__":
     free_flash = block_size * free_blocks
     used_flash = total_flash - free_flash
 
+    logger.info(f"Physische Flash-Größe: {esp.flash_size() / (1024 * 1000):.0f} MB")
     logger.info(f"Freier Flash:     {free_flash / 1024:.2f} KB")
     logger.info(f"Belegter Flash:   {used_flash / 1024:.2f} KB")
     logger.info(f"Gesamt-Größe:     {total_flash / 1024:.2f} KB")
@@ -226,24 +252,14 @@ if __name__ == "__main__":
     cpu_freq_hz = machine.freq()
     logger.info(f"CPU-Frequenz: {cpu_freq_hz / 1000000:.0f} MHz")
 
-    try:
-        # Liefert die Temperatur in Fahrenheit oder Celsius (je nach Chip/Firmware)
-        # Meistens wird die Temperatur in Grad Celsius zurückgegeben
-        temp_c = (esp32.raw_temperature() - 32) * 5/9
-        # Falls deine Firmware Fahrenheit liefert, umrechnen: (temp_f - 32) * 5/9
-        logger.info(f"Interne Chip-Temperatur: {temp_c:.1f} °C")
-    except AttributeError:
-        logger.info("Der Temperatursensor wird von diesem Chip/Firmware nicht unterstützt.")
-
-    logger.info(f"Physische Flash-Größe: {esp.flash_size() / (1024 * 1000):.0f} MB")
+    #asyncio.run(web_server.start())
+    task1 = asyncio.create_task(web_server.start())
+    logger.info("Main loop")
+    asyncio.run(main_loop())
 
     
-    while True:
 
-        time.sleep(10)
-        net_mgr_status = net_mgr.get_status()
-        logger.debug("nur console")
-        #web_server.start()
+
 
 
     
