@@ -19,6 +19,7 @@ import time
 from microdot import Microdot, Response, send_file
 import os
 import utilities
+import json
 """#####################################################################
 # Informations
 #####################################################################"""
@@ -104,7 +105,7 @@ class WebServer:
         def get_data(request):
             # Das Dictionary, das an die Website zurückgegeben wird
             # Microdot erkennt das Dict und sendet es automatisch als JSON mit dem Header 'application/json'
-            return utilities.get_device_telemetry()
+            return json.dumps(utilities.get_device_status())
 
         # Catch-All Route für alle statischen Dateien (CSS, JS, Bilder)
         @self.app.route('/<path:path>')

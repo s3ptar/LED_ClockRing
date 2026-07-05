@@ -58,8 +58,6 @@ web_server = WebServer()
 """#####################################################################
 # Local Funtions
 #####################################################################"""
-
-
 class RotatingFileHandler(logging.Handler):
     def __init__(self, filename, max_bytes=1024, backup_count=3):
         super().__init__()
@@ -184,7 +182,8 @@ async def main_loop():
     while True:
         await asyncio.sleep(30)
         net_mgr_status = net_mgr.get_status()
-        utilities.get_device_telemetry()
+        #logger.debug(utilities.get_device_telemetry())
+        logger.debug(utilities.get_device_status())
 
 """#####################################################################
 #! @fn           int main(){

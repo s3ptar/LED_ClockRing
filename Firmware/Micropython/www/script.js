@@ -41,6 +41,8 @@ var date_for_wifi = [
     {id:2, ssid:"WifiDeins", pass:"AuchGeheim", comment:"Garten", mode:"STA"},
 ];
 
+var tableDataNested = [{name:"wertename", value: 0}];
+
 /***********************************************************************
 * Constant
 ***********************************************************************/
@@ -85,6 +87,7 @@ var tableData = [
 var active_section = "";
 var data_table;
 var tabellen_daten;
+var telemetrie_table;
 
 /***********************************************************************
 * Constant
@@ -173,6 +176,40 @@ async function fetchSensorData() {
 }
 
 /***********************************************************************
+*! \fn          display_telemetry_data(data)
+*  \brief       zeigt die daten in einer tabulator tabelle an
+*  \param       data
+*  \exception   none
+*  \return      none
+***********************************************************************/
+function display_telemetry_data(data){
+	console.log(data);
+	const tableDataNested = [];
+
+	for (const [categoryName, values] of Object.entries(data)) {
+		const unit = values.unit ? ` (${values.unit})` : "";
+        const parentNode = {
+            name: categoryName.toUpperCase(),
+            value: unit,
+            _children: []
+        };
+
+        for (const [key, value] of Object.entries(values)) {
+			if (key === "unit") continue;
+            parentNode._children.push({
+                name: key,
+                value: String(value)
+            });
+        }
+
+        tableDataNested.push(parentNode);
+    }
+    console.log(tableDataNested);
+	telemetrie_table.setData(tableDataNested);
+	return tableDataNested;
+}
+
+/***********************************************************************
 *! \fn          init_data_table()
 *  \brief       build log table
 *  \param       none
@@ -220,6 +257,19 @@ function init_data_table() {
 				});
 				fetchSensorData();
 			    break;
+			}
+			case "telemetrie":{
+				telemetrie_table = new Tabulator("#id_telemetrie_table", {
+					layout: "fitColumns",
+					placeholder: "Lade Daten...",
+					data:tableDataNested,
+                    dataTree:true,
+                    dataTreeStartExpanded:true,
+                    columns:[
+						{title:"Name", field:"name", responsive:0}, //never hide this column
+                        {title:"Value", field:"value"}
+                    ],
+                });
 			}
 			default:{
 			}
@@ -413,6 +463,18 @@ function init_site(){
 					
         ],
 	});
+
+	telemetrie_table = new Tabulator("#id_telemetrie_table", {
+		layout: "fitColumns",
+		placeholder: "Lade Daten...",
+		data:tableDataNested,
+		dataTree:true,
+        dataTreeStartExpanded:true,
+        columns:[
+			{title:"Name", field:"name", responsive:0}, //never hide this column
+            {title:"Value", field:"value"}
+        ],
+	});
 	/*
 	data_table = new Tabulator("#id_data_table", {
 		data: tableData,
@@ -492,7 +554,7 @@ function init_site(){
 							}
 						return response.json(); // Parses JSON response into JavaScript objects
 						})
-					.then(data => console.log(data))
+					.then(data => {display_telemetry_data(data);})
 					.catch(error => console.error('There was a problem with your fetch operation:', error)
 				);
 
